@@ -346,7 +346,7 @@
                         <input type="radio" id="srcPredefined" name="sourceType" value="predefined">
                         <label for="srcPredefined" class="label">Predefined:</label>
                     </div>
-                    <select id="predefinedSelect"></select>
+                    <select id="predefinedSelect"><option selected disabled hidden>---</option></select>
 
                     <div class="radio-row">
                         <input type="radio" id="srcEquatorial" name="sourceType" value="equatorial" checked>
@@ -537,6 +537,14 @@ function applyPredefined() {
     const name = $("predefinedSelect").value;
     const src = SOURCES[name];
     $("sourceName").value = name;
+    // Clear other coordinate fields to avoid confusion
+    $("eq_c2").value="";
+    $("eq_c1").value="";
+    $("gal_c1").value="";
+    $("gal_c2").value="";
+    $("hor_c1").value="";
+    $("hor_c2").value="";
+        
     $(PREFIX[src.sys] + "_c1").value = src.c1;
     $(PREFIX[src.sys] + "_c2").value = src.c2;
 }
