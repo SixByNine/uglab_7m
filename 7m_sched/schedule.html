@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7m Schedule Generator</title>
+    <style>
+        /* Base styles matching Qt dark theme */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px 10px;
+            color: #ffffff;
+        }
+
+        /* Qt Window Frame */
+        .qt-dialog {
+            width: 440px;
+            background-color: #000000;
+            border: 1px solid #444444;
+            border-radius: 6px 6px 4px 4px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        /* Qt Titlebar */
+        .qt-titlebar {
+            background: linear-gradient(to bottom, #d2d2d2, #b8b8b8);
+            color: #000000;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #777777;
+        }
+
+        .qt-titlebar-title {
+            flex-grow: 1;
+            text-align: center;
+            margin-left: 16px; /* Offset for close button symmetry */
+        }
+
+        .qt-titlebar-close {
+            width: 15px;
+            height: 15px;
+            background-color: #3a3a3a;
+            color: #ffffff;
+            border: 1px solid #1a1a1a;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .qt-titlebar-close:hover {
+            background-color: #e81123;
+            color: white;
+        }
+
+        /* Content Body */
+        .qt-content {
+            padding: 10px 12px 12px 12px;
+        }
+
+        /* Form Layout */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 5px 8px;
+            align-items: center;
+        }
+
+        .label {
+            color: #ffffff;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        /* Form Inputs */
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #707070;
+            border-radius: 3px;
+            padding: 2px 5px;
+            height: 22px;
+            outline: none;
+            font-size: 12px;
+        }
+
+        input::placeholder {
+            color: #b0aec0;
+            font-style: italic;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 2px rgba(59, 130, 246, 0.8);
+        }
+
+        select {
+            background-color: #2e2e2e;
+            color: #ffffff;
+            border: 1px solid #555555;
+            padding-right: 18px;
+            cursor: pointer;
+        }
+
+        /* Dual Input Row */
+        .dual-inputs {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dual-inputs input {
+            flex: 1;
+        }
+
+        /* Section Dividers */
+        .section-divider {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            margin: 8px 0 4px 0;
+            text-align: center;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #777777;
+        }
+
+        .section-title {
+            padding: 0 8px;
+            color: #5c6bc0; /* Distinct purple/blue color from screenshot */
+            font-weight: bold;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Radio & Checkbox Controls */
+        .radio-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border: 1px solid #888888;
+            background-color: #ffffff;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        input[type="radio"] {
+            border-radius: 50%;
+        }
+
+        input[type="radio"]:checked::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 7px;
+            height: 7px;
+            background-color: #000000;
+            border-radius: 50%;
+        }
+
+        input[type="checkbox"] {
+            border-radius: 2px;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: -3px;
+            left: 1px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000000;
+        }
+
+        /* Buttons */
+        .qt-btn {
+            background: linear-gradient(to bottom, #f5f5f5, #e0e0e0);
+            color: #000000;
+            border: 1px solid #888888;
+            border-radius: 3px;
+            padding: 2px 10px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        .qt-btn:hover {
+            background: linear-gradient(to bottom, #ffffff, #eaeaea);
+            border-color: #666666;
+        }
+
+        .qt-btn:active {
+            background: linear-gradient(to bottom, #d0d0d0, #e5e5e5);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .full-width-btn {
+            grid-column: span 2;
+            width: 50%;
+            margin-left: auto;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        /* Footer Action Buttons */
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 4px;
+        }
+
+        .action-bar .qt-btn {
+            width: 78px;
+        }
+
+        /* SVG Icons */
+        .icon {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+        }
+
+        .text-static-info {
+            color: #ffffff;
+            font-size: 12px;
+        }
+        input:disabled { background-color: #555555; color: #999999; cursor: not-allowed; }
+
+        /* Page (table) */
+        .page { width: 100%; max-width: 1100px; }
+        .page h1 { font-size: 16px; margin-bottom: 10px; }
+        .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+        .toolbar .qt-btn { padding: 2px 14px; }
+        table.obs { width: 100%; border-collapse: collapse; }
+        table.obs th, table.obs td { border: 1px solid #444444; padding: 4px 6px; text-align: left; vertical-align: middle; }
+        table.obs th { background: #2a2a2a; }
+        table.obs td.actions { white-space: nowrap; }
+        table.obs td.actions .qt-btn { height: 20px; padding: 0 6px; margin-right: 2px; }
+        .empty-row td { color: #888888; text-align: center; }
+
+        /* Dialog overlay */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); justify-content: center; align-items: flex-start; overflow-y: auto; padding: 20px 10px; z-index: 10; }
+        .overlay.open { display: flex; }
+        .form-error { color: #ff6b6b; min-height: 16px; margin-top: 8px; user-select: text; }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        <h1>7m Schedule Generator</h1>
+        <div class="toolbar">
+            <button class="qt-btn" type="button" onclick="openDialog(null)">Add observation</button>
+            <button class="qt-btn" type="button" onclick="downloadJson()">Download JSON</button>
+            <button class="qt-btn" type="button" onclick="$('importFile').click()">Import JSON</button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <table class="obs">
+            <thead>
+                <tr><th>Source</th><th>Duration</th><th>Coordinate</th><th>Frequency</th><th>Scan</th><th></th></tr>
+            </thead>
+            <tbody id="obsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="overlay" id="overlay">
+    <div class="qt-dialog">
+        <!-- Window Title Bar -->
+        <div class="qt-titlebar">
+            <span class="qt-titlebar-title" id="dialogTitle">Add Observation</span>
+            <div class="qt-titlebar-close" title="Close" onclick="closeDialog()">x</div>
+        </div>
+
+        <!-- Form Contents -->
+        <div class="qt-content">
+            <form id="observationForm" onsubmit="event.preventDefault(); saveObservation();">
+                <div class="form-grid">
+                    
+                    <!-- Basic Parameters -->
+                    <label class="label" for="sourceName">Source name:</label>
+                    <input type="text" id="sourceName" placeholder="Source name">
+
+                    <label class="label" for="observer">Observer:</label>
+                    <input type="text" id="observer" placeholder="Name">
+
+                    <label class="label" for="duration">Duration (seconds):</label>
+                    <input type="text" id="duration" placeholder="120">
+
+                    <label class="label" for="nrObs">Nr. observations:</label>
+                    <input type="text" id="nrObs" value="1">
+
+                    <!-- Section: Source Selection -->
+                    <div class="section-divider">
+                        <span class="section-title">Source selection</span>
+                    </div>
+
+                    <div class="radio-row">
+                        <input type="radio" id="srcPredefined" name="sourceType" value="predefined">
+                        <label for="srcPredefined" class="label">Predefined:</label>
+                    </div>
+                    <select id="predefinedSelect"></select>
+
+                    <div class="radio-row">
+                        <input type="radio" id="srcEquatorial" name="sourceType" value="equatorial" checked>
+                        <label for="srcEquatorial" class="label">Equatorial (Ra, Dec in J2000):</label>
+                    </div>
+                    <div class="dual-inputs">
+                        <input type="text" id="eq_c1" placeholder="00:00:00.00">
+                        <input type="text" id="eq_c2" placeholder="-90:00:00.00">
+                    </div>
+
+                    <div class="radio-row">
+                        <input type="radio" id="srcGalactic" name="sourceType" value="galactic">
+                        <label for="srcGalactic" class="label">Galactic (l, b in degrees):</label>
+                    </div>
+                    <div class="dual-inputs">
+                        <input type="text" id="gal_c1" placeholder="123.45">
+                        <input type="text" id="gal_c2" placeholder="-90.00">
+                    </div>
+
+                    <div class="radio-row">
+                        <input type="radio" id="srcHorizontal" name="sourceType" value="horizontal">
+                        <label for="srcHorizontal" class="label">Horizontal (Az, el in degrees):</label>
+                    </div>
+                    <div class="dual-inputs">
+                        <input type="text" id="hor_c1" placeholder="123.45">
+                        <input type="text" id="hor_c2" placeholder="45.00">
+                    </div>
+
+          
+
+                    <!-- Section: Position Switching -->
+                    <div class="section-divider">
+                        <span class="section-title">Position switching</span>
+                    </div>
+
+                    <label class="label" for="posSwitching">Position switching:</label>
+                    <input type="checkbox" id="posSwitching">
+
+                    <span class="label">Coordinates:</span>
+                    <span class="text-static-info">Equatorial: Ra, Dec in J2000</span>
+
+                    <label class="label">Reference position:</label>
+                    <div class="dual-inputs">
+                        <input type="text" id="ref_c1" placeholder="00:00:00.00">
+                        <input type="text" id="ref_c2" placeholder="-90:00:00.00">
+                    </div>
+
+                    <!-- Section: Centre Frequency -->
+                    <div class="section-divider">
+                        <span class="section-title">Centre frequency</span>
+                    </div>
+
+                    <label class="label" for="centreFreq">Centre frequency (MHz):</label>
+                    <input type="text" id="centreFreq" value="1420.00">
+
+                    <label class="label" for="sourceVel">Source velocity (km/s):</label>
+                    <input type="text" id="sourceVel" value="0.00">
+
+                    <label class="label" for="earthMotion">Earth motion correction:</label>
+                    <input type="checkbox" id="earthMotion" checked>
+
+                    <!-- Section: Scan Parameters -->
+                    <div class="section-divider">
+                        <span class="section-title">Scan parameters</span>
+                    </div>
+
+                    <label class="label" for="scanMode">Scanning mode:</label>
+                    <input type="checkbox" id="scanMode">
+
+                    <label class="label">Initial offset (Az/El in degrees):</label>
+                    <div class="dual-inputs">
+                        <input type="text" id="scanOffAz" placeholder="-5.00">
+                        <input type="text" id="scanOffEl" placeholder="0.00">
+                    </div>
+
+                    <label class="label">Offset rate (Az/El in degrees/min):</label>
+                    <div class="dual-inputs">
+                        <input type="text" id="scanRateAz" placeholder="2.50">
+                        <input type="text" id="scanRateEl" placeholder="0.00">
+                    </div>
+
+                    <!-- Section: Frequency Switching -->
+                    <div class="section-divider">
+                        <span class="section-title">Frequency switching</span>
+                    </div>
+
+                    <label class="label" for="freqSwitching">Frequency switching:</label>
+                    <input type="checkbox" id="freqSwitching">
+
+                    <label class="label" for="freqOffset">Frequency offset (MHz):</label>
+                    <input type="text" id="freqOffset" value="-3.00">
+
+                </div>
+
+                <div class="form-error" id="formError"></div>
+
+                <!-- Bottom Action Buttons -->
+                <div class="action-bar">
+                    <button class="qt-btn" type="button" onclick="closeDialog()">
+                        <!-- Stop/Cancel Red Icon -->
+                        <svg class="icon" viewBox="0 0 24 24" fill="#d32f2f">
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        Cancel
+                    </button>
+                    <button class="qt-btn" type="submit">
+                        <!-- OK / Green Check Icon -->
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="3">
+                            <path d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Ok
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+<script>
+// ===== Predefined sources: edit here =====
+// sys: 'equatorial' (c1=RA hh:mm:ss.s, c2=Dec dd:mm:ss.s) | 'galactic' (l, b deg) | 'horizontal' (az, el deg)
+const SOURCES = {
+    "S7":   { sys: "galactic", c1: "132.0", c2: "-1.0" },
+    "Cas A": { sys: "equatorial", c1: "23:23:24.0", c2: "+58:48:54.0" },
+    "Cyg A": { sys: "equatorial", c1: "19:59:28.4", c2: "+40:44:02.1" },
+    "Galactic centre": { sys: "galactic", c1: "0.0", c2: "0.0" }
+};
+// =========================================
+
+const PREFIX = { equatorial: "eq", galactic: "gal", horizontal: "hor" };
+const COORD_LABELS = {
+    equatorial: ["ra", "dec"],
+    galactic: ["l", "b"],
+    horizontal: ["az", "el"]
+};
+const MODE_IDS = ["posSwitching", "scanMode", "freqSwitching"];
+
+let observations = [];
+let editIndex = null;
+
+const $ = id => document.getElementById(id);
+const val = id => $(id).value.trim();
+const setDisabled = (ids, off) => ids.forEach(id => { $(id).disabled = off; });
+
+// ---------- Enable/disable logic ----------
+function sourceChoice() {
+    return document.querySelector('input[name="sourceType"]:checked').value;
+}
+
+function updateCoordEnable() {
+    const choice = sourceChoice();
+    for (const sys in PREFIX) {
+        setDisabled([PREFIX[sys] + "_c1", PREFIX[sys] + "_c2"], choice !== sys);
+    }
+    $("predefinedSelect").disabled = choice !== "predefined";
+    if (choice === "predefined") applyPredefined();
+}
+
+function applyPredefined() {
+    const name = $("predefinedSelect").value;
+    const src = SOURCES[name];
+    $("sourceName").value = name;
+    $(PREFIX[src.sys] + "_c1").value = src.c1;
+    $(PREFIX[src.sys] + "_c2").value = src.c2;
+}
+
+function updateModeEnable() {
+    setDisabled(["ref_c1", "ref_c2"], !$("posSwitching").checked);
+    setDisabled(["scanOffAz", "scanOffEl", "scanRateAz", "scanRateEl"], !$("scanMode").checked);
+    setDisabled(["freqOffset"], !$("freqSwitching").checked);
+}
+
+function onModeChange(changedId) {
+    if ($(changedId).checked) {
+        MODE_IDS.filter(id => id !== changedId).forEach(id => { $(id).checked = false; });
+    }
+    updateModeEnable();
+}
+
+// ---------- Validation ----------
+function isNum(s) {
+    return s !== "" && isFinite(Number(s));
+}
+
+function inRange(s, lo, hi) {
+    return isNum(s) && Number(s) >= lo && Number(s) <= hi;
+}
+
+function validRA(s) {
+    const m = /^(\d{1,2}):(\d{1,2}):(\d{1,2}(\.\d+)?)$/.exec(s);
+    return !!m && +m[1] < 24 && +m[2] < 60 && +m[3] < 60;
+}
+
+function validDec(s) {
+    const m = /^[+-]?(\d{1,2}):(\d{1,2}):(\d{1,2}(\.\d+)?)$/.exec(s);
+    if (!m || +m[2] >= 60 || +m[3] >= 60) return false;
+    return +m[1] < 90 || (+m[1] === 90 && +m[2] === 0 && +m[3] === 0);
+}
+
+function validateCoords(sys, c1, c2, what) {
+    if (c1 === "" || c2 === "") return what + " is required.";
+    if (sys === "equatorial") {
+        if (!validRA(c1)) return what + ": RA must be hh:mm:ss.s (0-24h).";
+        if (!validDec(c2)) return what + ": Dec must be dd:mm:ss.s (-90 to +90).";
+    } else if (sys === "galactic") {
+        if (!inRange(c1, 0, 360)) return what + ": l must be 0 to 360 degrees.";
+        if (!inRange(c2, -90, 90)) return what + ": b must be -90 to 90 degrees.";
+    } else {
+        if (!inRange(c1, 0, 360)) return what + ": az must be 0 to 360 degrees.";
+        if (!inRange(c2, 0, 90)) return what + ": el must be 0 to 90 degrees.";
+    }
+    return "";
+}
+
+function validate(o) {
+    if (!o.source_name) return "Source name is required.";
+    if (!o.observer) return "Observer is required.";
+    if (!(isNum(val("duration")) && o.duration > 0)) return "Duration must be a positive number.";
+    if (!/^[1-9]\d*$/.test(val("nrObs"))) return "Nr. observations must be a positive integer.";
+    let err = validateCoords(o.coord_system, val(PREFIX[o.coord_system] + "_c1"), val(PREFIX[o.coord_system] + "_c2"), "Source coordinates");
+    if (err) return err;
+    if (o.position_switching) {
+        err = validateCoords("equatorial", val("ref_c1"), val("ref_c2"), "Reference position");
+        if (err) return err;
+    }
+    if (!isNum(val("centreFreq"))) return "Centre frequency must be a number.";
+    if (!isNum(val("sourceVel"))) return "Source velocity must be a number.";
+    if (o.scanning_mode) {
+        for (const id of ["scanOffAz", "scanOffEl", "scanRateAz", "scanRateEl"]) {
+            if (!isNum(val(id))) return "All scan parameters must be numbers.";
+        }
+    }
+    if (o.frequency_switching && !isNum(val("freqOffset"))) return "Frequency offset must be a number.";
+    return "";
+}
+
+// ---------- Form <-> observation ----------
+function readForm() {
+    const choice = sourceChoice();
+    const sys = choice === "predefined" ? SOURCES[$("predefinedSelect").value].sys : choice;
+    const p = PREFIX[sys];
+    const isDeg = sys !== "equatorial";
+    const o = {
+        source_name: val("sourceName"),
+        observer: val("observer"),
+        duration: Number(val("duration")),
+        nobs: Number(val("nrObs")),
+        coord_system: sys,
+        coord1: isDeg ? Number(val(p + "_c1")) : val(p + "_c1"),
+        coord2: isDeg ? Number(val(p + "_c2")) : val(p + "_c2"),
+        position_switching: $("posSwitching").checked,
+        centre_frequency: Number(val("centreFreq")),
+        source_velocity: Number(val("sourceVel")),
+        earth_motion_correction: $("earthMotion").checked,
+        scanning_mode: $("scanMode").checked,
+        frequency_switching: $("freqSwitching").checked
+    };
+    if (o.position_switching) {
+        o.reference_coord1 = val("ref_c1");
+        o.reference_coord2 = val("ref_c2");
+    }
+    if (o.scanning_mode) {
+        o.initial_offset_az = Number(val("scanOffAz"));
+        o.initial_offset_el = Number(val("scanOffEl"));
+        o.offset_rate_az = Number(val("scanRateAz"));
+        o.offset_rate_el = Number(val("scanRateEl"));
+    }
+    if (o.frequency_switching) o.frequency_offset = Number(val("freqOffset"));
+    return o;
+}
+
+function fillForm(o) {
+    $("sourceName").value = o.source_name;
+    $("observer").value = o.observer;
+    $("duration").value = o.duration;
+    $("nrObs").value = o.nobs;
+    document.querySelector('input[name="sourceType"][value="' + o.coord_system + '"]').checked = true;
+    $(PREFIX[o.coord_system] + "_c1").value = o.coord1;
+    $(PREFIX[o.coord_system] + "_c2").value = o.coord2;
+    $("posSwitching").checked = o.position_switching;
+    $("ref_c1").value = o.reference_coord1 ?? "";
+    $("ref_c2").value = o.reference_coord2 ?? "";
+    $("centreFreq").value = o.centre_frequency;
+    $("sourceVel").value = o.source_velocity;
+    $("earthMotion").checked = o.earth_motion_correction;
+    $("scanMode").checked = o.scanning_mode;
+    $("scanOffAz").value = o.initial_offset_az ?? "";
+    $("scanOffEl").value = o.initial_offset_el ?? "";
+    $("scanRateAz").value = o.offset_rate_az ?? "";
+    $("scanRateEl").value = o.offset_rate_el ?? "";
+    $("freqSwitching").checked = o.frequency_switching;
+    $("freqOffset").value = o.frequency_offset ?? "";
+}
+
+// ---------- Dialog ----------
+function openDialog(index) {
+    editIndex = index;
+    $("observationForm").reset();
+    $("formError").textContent = "";
+    $("dialogTitle").textContent = index === null ? "Add Observation" : "Edit Observation";
+    if (index !== null) {
+        fillForm(observations[index]);
+    } else if (observations.length > 0) {
+        $("observer").value = observations[0].observer;
+    }
+    updateCoordEnable();
+    updateModeEnable();
+    $("overlay").classList.add("open");
+}
+
+function closeDialog() {
+    $("overlay").classList.remove("open");
+}
+
+function saveObservation() {
+    const o = readForm();
+    const err = validate(o);
+    if (err) {
+        $("formError").textContent = err;
+        return;
+    }
+    if (editIndex === null) observations.push(o);
+    else observations[editIndex] = o;
+    closeDialog();
+    renderTable();
+}
+
+// ---------- List operations ----------
+function deleteObs(i) {
+    observations.splice(i, 1);
+    renderTable();
+}
+
+function moveObs(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= observations.length) return;
+    [observations[i], observations[j]] = [observations[j], observations[i]];
+    renderTable();
+}
+
+// ---------- Table ----------
+function coordText(o) {
+    const [a, b] = COORD_LABELS[o.coord_system];
+    return a + "=" + o.coord1 + "; " + b + "=" + o.coord2;
+}
+
+function freqText(o) {
+    let t = "nu=" + o.centre_frequency;
+    if (o.frequency_switching) t += " dnu=" + o.frequency_offset;
+    t += " src_vel=" + o.source_velocity;
+    if (o.earth_motion_correction) t += " earth_corr";
+    if (o.position_switching) t += " ref=(" + o.reference_coord1 + "; " + o.reference_coord2 + ")";
+    return t;
+}
+
+function scanText(o) {
+    if (!o.scanning_mode) return "-";
+    return "off=(" + o.initial_offset_az + ", " + o.initial_offset_el + ") rate=(" +
+        o.offset_rate_az + ", " + o.offset_rate_el + ")";
+}
+
+function makeButton(label, onclick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "qt-btn";
+    b.textContent = label;
+    b.onclick = onclick;
+    return b;
+}
+
+function renderTable() {
+    const body = $("obsBody");
+    body.textContent = "";
+    if (observations.length === 0) {
+        const tr = body.insertRow();
+        tr.className = "empty-row";
+        const td = tr.insertCell();
+        td.colSpan = 6;
+        td.textContent = "No observations yet.";
+        return;
+    }
+    observations.forEach((o, i) => {
+        const tr = body.insertRow();
+        [o.source_name, o.nobs + "x" + o.duration + "s", coordText(o), freqText(o), scanText(o)]
+            .forEach(t => { tr.insertCell().textContent = t; });
+        const td = tr.insertCell();
+        td.className = "actions";
+        td.append(
+            makeButton("Edit", () => openDialog(i)),
+            makeButton("Delete", () => deleteObs(i)),
+            makeButton("\u2191", () => moveObs(i, -1)),
+            makeButton("\u2193", () => moveObs(i, 1))
+        );
+    });
+}
+
+// ---------- Export ----------
+function downloadJson() {
+    const blob = new Blob([JSON.stringify(observations, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "schedule.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ---------- Import ----------
+const REQUIRED_FIELDS = ["source_name", "observer", "duration", "nobs", "coord_system", "coord1", "coord2",
+    "position_switching", "centre_frequency", "source_velocity", "earth_motion_correction",
+    "scanning_mode", "frequency_switching"];
+
+function checkImported(list) {
+    if (!Array.isArray(list)) return "File must contain a JSON array of observations.";
+    for (let i = 0; i < list.length; i++) {
+        const o = list[i];
+        if (o === null || typeof o !== "object") return "Entry " + (i + 1) + " is not an object.";
+        const missing = REQUIRED_FIELDS.find(k => !(k in o));
+        if (missing) return "Entry " + (i + 1) + " is missing '" + missing + "'.";
+        if (!(o.coord_system in PREFIX)) return "Entry " + (i + 1) + " has an invalid coord_system.";
+    }
+    return "";
+}
+
+$("importFile").addEventListener("change", e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        let list;
+        try {
+            list = JSON.parse(reader.result);
+        } catch (err) {
+            alert("Import failed: invalid JSON.");
+            return;
+        }
+        const err = checkImported(list);
+        if (err) {
+            alert("Import failed: " + err);
+            return;
+        }
+        if (observations.length > 0 && !confirm("Replace the current schedule with the imported one?")) return;
+        observations = list;
+        renderTable();
+    };
+    reader.readAsText(file);
+});
+
+// ---------- Init ----------
+for (const name in SOURCES) {
+    $("predefinedSelect").add(new Option(name, name));
+}
+document.querySelectorAll('input[name="sourceType"]').forEach(r => r.addEventListener("change", updateCoordEnable));
+$("predefinedSelect").addEventListener("change", applyPredefined);
+MODE_IDS.forEach(id => $(id).addEventListener("change", () => onModeChange(id)));
+renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" href="lab7m.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    </head>
+
+
+    <div>
+        <div id='topbox'>
+            <h1>Jodrell Bank 7m Telescope</h1>
+            <form>
+                <span style='font-weight:bold'>Observer ID:</span> 
+               <select id="observer" name="observer" disabled>
+                    <option value=''>Select Observer ID</option>
+                </select>
+                <br>
+                <select id="type" name="type" disabled>
+                    <option value='spec' selected>Spectra</option>
+                    <option value='scan'>Scan</option>
+                </select>
+
+ 
+
+                <select id="plotfile" name="plotfile" style='display:none'></select>
+                <select id="subplot" name="subplot" style='display:none'></select>
+                <span id="subplot_load" style="display:none; font-style:italic;">loading...</span>
+                <span>Download: <a id='csvdownload'>CSV</a></span>
+            </form>
+        </div>
+        <div id='plotbox'>
+            <div id="mainplot" style="width:100%;height:100%;"></div>
+        </div>
+    </div>
+
+
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="lab7m.js"></script>
+
+</html>

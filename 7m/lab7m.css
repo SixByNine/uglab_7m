@@ -1,0 +1,15 @@
+
+h1 {
+    margin-bottom:3px;
+}
+
+#topbox {
+    height: 100px;
+    width:100%;
+    border solid 1px black;
+}
+
+#plotbox {
+    height: 500px;
+    width: 100%;
+}
