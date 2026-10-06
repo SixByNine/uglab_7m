@@ -496,13 +496,41 @@ function sourceChoice() {
     return document.querySelector('input[name="sourceType"]:checked').value;
 }
 
+// Source inputs stay enabled; interacting with one selects its radio (as in the GUI).
 function updateCoordEnable() {
-    const choice = sourceChoice();
-    for (const sys in PREFIX) {
-        setDisabled([PREFIX[sys] + "_c1", PREFIX[sys] + "_c2"], choice !== sys);
+    if (sourceChoice() === "predefined") applyPredefined();
+}
+
+function selectSource(radioId) {
+    if (!$(radioId).checked) {
+        $(radioId).checked = true;
+        updateCoordEnable();
     }
-    $("predefinedSelect").disabled = choice !== "predefined";
-    if (choice === "predefined") applyPredefined();
+}
+
+// Partial-entry patterns: accept anything that could still become a valid value.
+const FMT = {
+    int: /^\d*$/,
+    ufloat: /^\d*\.?\d*$/,
+    sfloat: /^-?\d*\.?\d*$/,
+    ra: /^\d{0,2}(:\d{0,2}(:\d{0,2}(\.\d*)?)?)?$/,
+    dec: /^[+-]?\d{0,2}(:\d{0,2}(:\d{0,2}(\.\d*)?)?)?$/
+};
+const FIELD_FMT = {
+    duration: "ufloat", nrObs: "int",
+    eq_c1: "ra", eq_c2: "dec", ref_c1: "ra", ref_c2: "dec",
+    gal_c1: "ufloat", gal_c2: "sfloat", hor_c1: "ufloat", hor_c2: "ufloat",
+    centreFreq: "ufloat", sourceVel: "sfloat", freqOffset: "sfloat",
+    scanOffAz: "sfloat", scanOffEl: "sfloat", scanRateAz: "sfloat", scanRateEl: "sfloat"
+};
+for (const id in FIELD_FMT) {
+    const el = $(id), re = FMT[FIELD_FMT[id]];
+    el.dataset.last = el.value;
+    el.addEventListener("focus", () => { el.dataset.last = el.value; });
+    el.addEventListener("input", () => {
+        if (re.test(el.value)) el.dataset.last = el.value;
+        else el.value = el.dataset.last;
+    });
 }
 
 function applyPredefined() {
@@ -800,7 +828,14 @@ for (const name in SOURCES) {
     $("predefinedSelect").add(new Option(name, name));
 }
 document.querySelectorAll('input[name="sourceType"]').forEach(r => r.addEventListener("change", updateCoordEnable));
-$("predefinedSelect").addEventListener("change", applyPredefined);
+$("predefinedSelect").addEventListener("change", () => { $("srcPredefined").checked = true; applyPredefined(); });
+for (const sys in PREFIX) {
+    for (const n of ["_c1", "_c2"]) {
+        $(PREFIX[sys] + n).addEventListener("input", () => {
+            selectSource("src" + sys[0].toUpperCase() + sys.slice(1));
+        });
+    }
+}
 MODE_IDS.forEach(id => $(id).addEventListener("change", () => onModeChange(id)));
 renderTable();
 </script>
